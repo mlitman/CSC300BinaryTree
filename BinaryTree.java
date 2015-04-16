@@ -1,7 +1,7 @@
 
 public class BinaryTree 
 {
-	//private Node root;
+	private BinaryTree root;
 	private boolean isEmpty;
 	private int payload;
 	private BinaryTree leftTree;
@@ -11,33 +11,36 @@ public class BinaryTree
 	
 	public BinaryTree()
 	{
-		this(0);
+		this(0, null);
+		this.root = this;
 	}
 	
-	private BinaryTree(int depth)
+	private BinaryTree(int depth, BinaryTree root)
 	{
 		this.isEmpty = true;
 		this.leftTree = null;
 		this.rightTree = null;
 		this.depth = depth;
 		this.parent = null;
+		this.root = root;
 	}
 	
-	private void updateDepths(int newDepth)
+	private void updateDepths()
 	{
-		this.depth = newDepth;
+		this.depth--;
 		if(this.leftTree != null)
 		{
-			this.leftTree.updateDepths(this.depth+1);
+			this.leftTree.depth = this.depth+1;
 		}
 		if(this.rightTree != null)
 		{
-			this.rightTree.updateDepths(this.depth+1);
+			this.rightTree.depth = this.depth+1;
 		}
 	}
 	
 	private void rotateRight(BinaryTree pivot)
 	{
+		System.out.println("Rotate Right");
 		BinaryTree pivRT = null;
 		BinaryTree pivP = null;
 		BinaryTree pivGP = null;
@@ -59,11 +62,14 @@ public class BinaryTree
 			{
 				pivGP.rightTree = pivot;
 			}
+			pivot.parent = pivGP;
+			pivP.rightTree = null;
 		}
 		else
 		{
 			//pivot is the new root tree of the entire tree
 			pivot.parent = null;
+			pivP.rightTree = null;
 		}
 		
 		//always remove pivot from his parent
@@ -85,11 +91,12 @@ public class BinaryTree
 		pivP.parent = pivot;
 		
 		//update all of the depths under pivot
-		pivot.updateDepths(pivot.depth-1);
+		pivot.updateDepths();
 	}
 	
 	private void rotateLeft(BinaryTree pivot)
 	{
+		System.out.println("Rotate Left");
 		BinaryTree pivLT = null;
 		BinaryTree pivP = null;
 		BinaryTree pivGP = null;
@@ -111,11 +118,14 @@ public class BinaryTree
 			{
 				pivGP.rightTree = pivot;
 			}
+			pivot.parent = pivGP;
+			pivP.leftTree = null;
 		}
 		else
 		{
 			//pivot is the new root tree of the entire tree
 			pivot.parent = null;
+			pivP.leftTree = null;
 		}
 		
 		//always remove pivot from his parent
@@ -137,7 +147,7 @@ public class BinaryTree
 		pivP.parent = pivot;
 		
 		//update all of the depths under pivot
-		pivot.updateDepths(pivot.depth-1);
+		pivot.updateDepths();
 	}
 	
 	public boolean search(int value)
@@ -305,6 +315,67 @@ public class BinaryTree
 		{
 			this.payload = value;
 			this.isEmpty = false;
+			//ask is this entire tree out of balance?
+			if(!this.root.isBalanced())
+			{
+				if(this.root.leftTree == null)
+				{
+					//we are on the right side of the parents tree
+					if(this.parent.leftTree == this)
+					{
+						this.rotateRight(this);
+						this.rotateLeft(this);
+					}
+					else
+					{
+						this.parent.rotateLeft(this.parent);
+					}
+				}
+				else if(this.root.rightTree == null)
+				{
+					//the left tree is out of balance
+					if(this.parent.rightTree == this)
+					{
+						this.rotateLeft(this);
+						this.rotateRight(this);
+					}
+					else
+					{
+						this.parent.rotateRight(this.parent);
+					}
+				}
+				else
+				{
+					//we know we have a left and a right tree
+					if(this.root.leftTree.getMaxDepth() > this.root.rightTree.getMaxDepth())
+					{
+						//we are on the left side of the tree
+						if(this.parent.rightTree == this)
+						{
+							this.rotateLeft(this);
+							this.rotateRight(this);
+						}
+						else
+						{
+							this.parent.rotateRight(this.parent);
+						}
+
+					}
+					else
+					{
+						//we are on the right side of the tree
+						if(this.parent.leftTree == this)
+						{
+							this.rotateRight(this);
+							this.rotateLeft(this);
+						}
+						else
+						{
+							this.parent.rotateLeft(this.parent);
+						}
+					}
+				}
+			}
 		}
 		else
 		{
@@ -312,7 +383,7 @@ public class BinaryTree
 			{
 				if(this.leftTree == null)
 				{
-					this.leftTree = new BinaryTree(this.depth+1);
+					this.leftTree = new BinaryTree(this.depth+1, this.root);
 					this.leftTree.parent = this;
 				}
 				this.leftTree.add(value);
@@ -321,46 +392,10 @@ public class BinaryTree
 			{
 				if(this.rightTree == null)
 				{
-					this.rightTree = new BinaryTree(this.depth+1);
+					this.rightTree = new BinaryTree(this.depth+1, this.root);
 					this.rightTree.parent = this;
 				}
 				this.rightTree.add(value);
-			}
-		}
-		
-		//am I the top level root tree?
-		if(this.parent == null)
-		{
-			//do we need to rebalance?
-			if(!this.isBalanced())
-			{
-				if(this.leftTree == null)
-				{
-					//the right tree is out of balance
-					this.rightTree.rotateRight(this.rightTree.leftTree);
-					//missing a line
-				}
-				else if(this.rightTree == null)
-				{
-					//the left tree is out of balance
-					this.leftTree.rotateLeft(this.leftTree.rightTree);
-					//missing a line
-				}
-				else
-				{
-					//we know we have a left and a right tree
-					if(this.leftTree.getMaxDepth() > this.rightTree.getMaxDepth())
-					{
-						this.leftTree.rotateLeft(this.leftTree.rightTree);
-						//missing a line
-						
-					}
-					else
-					{
-						this.rightTree.rotateRight(this.rightTree.leftTree);
-						//missing a line
-					}
-				}
 			}
 		}
 	}
